@@ -1,0 +1,427 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>IBM Qiskit Quantum Computing Demo</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            background: linear-gradient(135deg, #0f0f23, #1a1a3e, #2d2d5f);
+            color: #e0e0e0;
+            min-height: 100vh;
+            padding: 20px;
+        }
+
+        .container {
+            max-width: 1200px;
+            margin: 0 auto;
+            background: rgba(255, 255, 255, 0.05);
+            backdrop-filter: blur(10px);
+            border-radius: 15px;
+            border: 1px solid rgba(255, 255, 255, 0.1);
+            overflow: hidden;
+            box-shadow: 0 20px 40px rgba(0, 0, 0, 0.3);
+        }
+
+        .header {
+            background: linear-gradient(90deg, #4285f4, #0f62fe);
+            padding: 30px;
+            text-align: center;
+            position: relative;
+            overflow: hidden;
+        }
+
+        .header::before {
+            content: '';
+            position: absolute;
+            top: 0;
+            left: 0;
+            right: 0;
+            bottom: 0;
+            background: url('data:image/svg+xml,<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 100 100"><circle cx="20" cy="20" r="2" fill="rgba(255,255,255,0.1)"/><circle cx="80" cy="40" r="1" fill="rgba(255,255,255,0.1)"/><circle cx="40" cy="80" r="1.5" fill="rgba(255,255,255,0.1)"/></svg>');
+            animation: float 10s ease-in-out infinite;
+        }
+
+        @keyframes float {
+            0%, 100% { transform: translateY(0px) rotate(0deg); }
+            50% { transform: translateY(-10px) rotate(180deg); }
+        }
+
+        h1 {
+            font-size: 2.5rem;
+            margin-bottom: 10px;
+            position: relative;
+            z-index: 1;
+        }
+
+        .subtitle {
+            font-size: 1.2rem;
+            opacity: 0.9;
+            position: relative;
+            z-index: 1;
+        }
+
+        .content {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 30px;
+            padding: 30px;
+        }
+
+        .code-section {
+            background: rgba(0, 0, 0, 0.3);
+            border-radius: 10px;
+            border: 1px solid rgba(255, 255, 255, 0.1);
+            overflow: hidden;
+        }
+
+        .code-header {
+            background: linear-gradient(90deg, #2d2d2d, #3d3d3d);
+            padding: 15px 20px;
+            border-bottom: 1px solid rgba(255, 255, 255, 0.1);
+            display: flex;
+            align-items: center;
+            gap: 10px;
+        }
+
+        .code-title {
+            font-weight: 600;
+            color: #4285f4;
+        }
+
+        .code-dots {
+            display: flex;
+            gap: 5px;
+            margin-left: auto;
+        }
+
+        .dot {
+            width: 12px;
+            height: 12px;
+            border-radius: 50%;
+        }
+
+        .dot.red { background: #ff5f56; }
+        .dot.yellow { background: #ffbd2e; }
+        .dot.green { background: #27ca3f; }
+
+        pre {
+            padding: 20px;
+            overflow-x: auto;
+            background: rgba(0, 0, 0, 0.2);
+            font-family: 'Courier New', monospace;
+            font-size: 14px;
+            line-height: 1.5;
+            border-radius: 0 0 10px 10px;
+        }
+
+        .keyword { color: #ff79c6; }
+        .string { color: #f1fa8c; }
+        .comment { color: #6272a4; font-style: italic; }
+        .function { color: #50fa7b; }
+        .number { color: #bd93f9; }
+        .import { color: #8be9fd; }
+
+        .info-section {
+            background: rgba(255, 255, 255, 0.03);
+            border-radius: 10px;
+            padding: 25px;
+            border: 1px solid rgba(255, 255, 255, 0.1);
+        }
+
+        .info-section h3 {
+            color: #4285f4;
+            margin-bottom: 15px;
+            font-size: 1.4rem;
+        }
+
+        .info-section p {
+            line-height: 1.6;
+            margin-bottom: 15px;
+            opacity: 0.9;
+        }
+
+        .quantum-circuit {
+            background: rgba(0, 0, 0, 0.2);
+            border-radius: 8px;
+            padding: 20px;
+            margin: 20px 0;
+            font-family: monospace;
+            border-left: 4px solid #4285f4;
+        }
+
+        .run-button {
+            background: linear-gradient(45deg, #4285f4, #0f62fe);
+            color: white;
+            border: none;
+            padding: 12px 25px;
+            border-radius: 25px;
+            font-size: 16px;
+            font-weight: 600;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            box-shadow: 0 4px 15px rgba(66, 133, 244, 0.3);
+            margin-top: 15px;
+        }
+
+        .run-button:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 6px 20px rgba(66, 133, 244, 0.4);
+        }
+
+        .output {
+            background: rgba(0, 20, 0, 0.3);
+            border: 1px solid rgba(0, 255, 0, 0.3);
+            border-radius: 8px;
+            padding: 15px;
+            margin-top: 15px;
+            font-family: monospace;
+            color: #50fa7b;
+            display: none;
+        }
+
+        @media (max-width: 768px) {
+            .content {
+                grid-template-columns: 1fr;
+                gap: 20px;
+                padding: 20px;
+            }
+
+            h1 {
+                font-size: 2rem;
+            }
+
+            .header {
+                padding: 20px;
+            }
+
+            pre {
+                font-size: 12px;
+                padding: 15px;
+            }
+        }
+
+        @media (max-width: 480px) {
+            body {
+                padding: 10px;
+            }
+
+            h1 {
+                font-size: 1.8rem;
+            }
+
+            .subtitle {
+                font-size: 1rem;
+            }
+
+            .content {
+                padding: 15px;
+            }
+
+            .info-section {
+                padding: 20px;
+            }
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <div class="header">
+            <h1>🔬 IBM Qiskit Quantum Demo</h1>
+            <p class="subtitle">Quantum Superposition & Bell State Creation</p>
+        </div>
+
+        <div class="content">
+            <div class="code-section">
+                <div class="code-header">
+                    <span class="code-title">quantum_bell_state.py</span>
+                    <div class="code-dots">
+                        <div class="dot red"></div>
+                        <div class="dot yellow"></div>
+                        <div class="dot green"></div>
+                    </div>
+                </div>
+                <pre><code><span class="comment"># IBM Qiskit - Bell State Creation and Measurement</span>
+<span class="comment"># Demonstrates quantum entanglement and superposition</span>
+
+<span class="import">from</span> qiskit <span class="import">import</span> QuantumCircuit, ClassicalRegister, QuantumRegister
+<span class="import">from</span> qiskit <span class="import">import</span> execute, Aer
+<span class="import">from</span> qiskit.visualization <span class="import">import</span> plot_histogram
+<span class="import">import</span> matplotlib.pyplot <span class="import">as</span> plt
+<span class="import">import</span> numpy <span class="import">as</span> np
+
+<span class="comment"># Create quantum and classical registers</span>
+<span class="keyword">def</span> <span class="function">create_bell_state_circuit</span>():
+    <span class="comment"># Initialize 2 qubits and 2 classical bits</span>
+    qreg = <span class="function">QuantumRegister</span>(<span class="number">2</span>, <span class="string">'q'</span>)
+    creg = <span class="function">ClassicalRegister</span>(<span class="number">2</span>, <span class="string">'c'</span>)
+    circuit = <span class="function">QuantumCircuit</span>(qreg, creg)
+    
+    <span class="comment"># Create Bell state |Φ+⟩ = (|00⟩ + |11⟩)/√2</span>
+    circuit.<span class="function">h</span>(qreg[<span class="number">0</span>])        <span class="comment"># Hadamard gate on qubit 0</span>
+    circuit.<span class="function">cx</span>(qreg[<span class="number">0</span>], qreg[<span class="number">1</span>])  <span class="comment"># CNOT gate (control: q0, target: q1)</span>
+    
+    <span class="comment"># Add measurement</span>
+    circuit.<span class="function">measure</span>(qreg, creg)
+    
+    <span class="keyword">return</span> circuit
+
+<span class="comment"># Execute the quantum circuit</span>
+<span class="keyword">def</span> <span class="function">run_quantum_experiment</span>():
+    <span class="comment"># Create the circuit</span>
+    bell_circuit = <span class="function">create_bell_state_circuit</span>()
+    
+    <span class="comment"># Print circuit diagram</span>
+    <span class="function">print</span>(<span class="string">"Quantum Circuit:"</span>)
+    <span class="function">print</span>(bell_circuit)
+    
+    <span class="comment"># Use Aer's QASM simulator</span>
+    simulator = Aer.<span class="function">get_backend</span>(<span class="string">'qasm_simulator'</span>)
+    
+    <span class="comment"># Execute the circuit 1000 times</span>
+    job = <span class="function">execute</span>(bell_circuit, simulator, shots=<span class="number">1000</span>)
+    result = job.<span class="function">result</span>()
+    
+    <span class="comment"># Get measurement counts</span>
+    counts = result.<span class="function">get_counts</span>(bell_circuit)
+    
+    <span class="function">print</span>(<span class="string">f"\nMeasurement Results (1000 shots):"</span>)
+    <span class="keyword">for</span> state, count <span class="keyword">in</span> counts.<span class="function">items</span>():
+        probability = count / <span class="number">1000</span>
+        <span class="function">print</span>(<span class="string">f"State |{state}⟩: {count} times ({probability:.1%})"</span>)
+    
+    <span class="keyword">return</span> counts
+
+<span class="comment"># Run the experiment</span>
+<span class="keyword">if</span> __name__ == <span class="string">"__main__"</span>:
+    <span class="function">print</span>(<span class="string">"=== IBM Qiskit Bell State Experiment ==="</span>)
+    <span class="function">print</span>(<span class="string">"Creating entangled quantum state..."</span>)
+    
+    results = <span class="function">run_quantum_experiment</span>()
+    
+    <span class="function">print</span>(<span class="string">"\n=== Analysis ==="</span>)
+    <span class="function">print</span>(<span class="string">"Expected: ~50% |00⟩ and ~50% |11⟩"</span>)
+    <span class="function">print</span>(<span class="string">"This demonstrates quantum entanglement!"</span>)</code></pre>
+                
+                <button class="run-button" onclick="simulateQuantumRun()">🚀 Simulate Quantum Execution</button>
+                
+                <div id="output" class="output">
+                    <div id="output-content"></div>
+                </div>
+            </div>
+
+            <div class="info-section">
+                <h3>🌟 About This Quantum Circuit</h3>
+                <p>This IBM Qiskit script creates a <strong>Bell State</strong> - one of the most famous quantum entangled states. Here's what happens:</p>
+
+                <div class="quantum-circuit">
+                    <strong>Circuit Steps:</strong><br>
+                    1. H gate → Creates superposition: |0⟩ + |1⟩<br>
+                    2. CNOT → Entangles qubits: |00⟩ + |11⟩<br>
+                    3. Measure → Collapses to either |00⟩ or |11⟩
+                </div>
+
+                <h3>⚛️ Quantum Concepts Demonstrated</h3>
+                <p><strong>Superposition:</strong> The Hadamard gate puts qubit 0 into a superposition of |0⟩ and |1⟩ states simultaneously.</p>
+                
+                <p><strong>Entanglement:</strong> The CNOT gate creates quantum entanglement between the two qubits. When measured, they always show correlated results.</p>
+                
+                <p><strong>Measurement:</strong> Quantum states collapse upon measurement, giving either |00⟩ or |11⟩ with equal probability (~50% each).</p>
+
+                <h3>🔬 Expected Results</h3>
+                <p>In an ideal quantum computer, this circuit produces:</p>
+                <ul style="margin-left: 20px; opacity: 0.9;">
+                    <li>~50% chance of measuring |00⟩</li>
+                    <li>~50% chance of measuring |11⟩</li>
+                    <li>~0% chance of |01⟩ or |10⟩ (due to entanglement)</li>
+                </ul>
+
+                <p style="margin-top: 20px; font-style: italic; opacity: 0.8;">This demonstrates that the qubits are quantum mechanically entangled - measuring one instantly determines the state of the other, regardless of distance.</p>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        function simulateQuantumRun() {
+            const output = document.getElementById('output');
+            const content = document.getElementById('output-content');
+            
+            // Show output
+            output.style.display = 'block';
+            
+            // Simulate the quantum execution with realistic results
+            const results = simulateBellStateResults();
+            
+            content.innerHTML = `
+=== IBM Qiskit Bell State Experiment ===
+Creating entangled quantum state...
+
+Quantum Circuit:
+     ┌───┐     ┌─┐   
+q_0: ┤ H ├──■──┤M├───
+     └───┘┌─┴─┐└╥┘┌─┐
+q_1: ─────┤ X ├─╫─┤M├
+          └───┘ ║ └╥┘
+c: 2/═══════════╩══╩═
+                0  1
+
+Measurement Results (1000 shots):
+State |00⟩: ${results['00']} times (${(results['00']/10).toFixed(1)}%)
+State |11⟩: ${results['11']} times (${(results['11']/10).toFixed(1)}%)
+
+=== Analysis ===
+Expected: ~50% |00⟩ and ~50% |11⟩
+This demonstrates quantum entanglement!
+
+✨ Quantum entanglement verified: No |01⟩ or |10⟩ states observed!
+🔬 Bell inequality violated - classical physics cannot explain this correlation.
+            `;
+        }
+
+        function simulateBellStateResults() {
+            // Simulate realistic Bell state results with some noise
+            const total = 1000;
+            const idealRatio = 0.5;
+            
+            // Add some realistic quantum noise
+            const noise = (Math.random() - 0.5) * 0.1; // ±5% variation
+            const ratio00 = idealRatio + noise;
+            
+            const count00 = Math.round(total * ratio00);
+            const count11 = total - count00;
+            
+            return {
+                '00': count00,
+                '11': count11
+            };
+        }
+
+        // Add some interactive animations
+        document.addEventListener('DOMContentLoaded', function() {
+            // Animate code syntax highlighting
+            const codeLines = document.querySelectorAll('pre code');
+            codeLines.forEach(code => {
+                code.style.opacity = '0';
+                code.style.animation = 'fadeIn 1s ease-in-out forwards';
+            });
+        });
+
+        // Add CSS animation
+        const style = document.createElement('style');
+        style.textContent = `
+            @keyframes fadeIn {
+                from { opacity: 0; transform: translateY(10px); }
+                to { opacity: 1; transform: translateY(0); }
+            }
+        `;
+        document.head.appendChild(style);
+    </script>
+</body>
+</html>
